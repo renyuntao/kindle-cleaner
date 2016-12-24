@@ -44,6 +44,7 @@ dir_path="/media/${whoami}/Kindle/documents/"
 # Print help message
 print_help()
 {
+	clear
 	local horizontal='================================='
 	local space='   '
 	echo -e "${BOLD}${horizontal} HELP ${horizontal}"
@@ -56,15 +57,21 @@ print_help()
 	echo -e "${space}kindle-cleaner [ ${BOLD}-s${NORMAL} | ${BOLD}--strict${NORMAL} ]"
 	echo -e "${space}kindle-cleaner [ ${BOLD}-p${NORMAL} ${UI}PATH${NORMAL} | ${BOLD}--path${NORMAL} ${UI}PATH${NORMAL} ]"
 	echo ""
-	echo -e "${BOLD}DESCRIPTION${NORMAL}"
-	echo "${space}Clean up the directory of Kindle, delete the unnecessary *.sdr file,"
-	echo "${space}free up the disk space of Kindle"
-	echo -e "${BOLD}-h, --help${NORMAL}\vShow this help message and exit"
+	echo -e "${BOLD}OPTIONS${NORMAL}"
+	echo -e "${space}${BOLD}-h, --help${NORMAL}"
+	echo -e "${space}${space}${space}Show this help message and exit"
 	echo ""
-	echo -e "${BOLD}-n, --normal${NORMAL}\vNormal Mode(Default)"
+	echo -e "${space}${BOLD}-n, --normal${NORMAL}"
+	echo -e "${space}${space}${space}Normal Mode(Default)"
 	echo ""
-	echo -e "${BOLD}-s, --strict${NORMAL}\vStrict Mode"
+	echo -e "${space}${BOLD}-s, --strict${NORMAL}"
+	echo -e "${space}${space}${space}Strict Mode"
 	echo ""
+	echo -e "${space}${BOLD}-p ${NORMAL}${ITALIC}PATH${NORMAL}, ${BOLD}--path=${NORMAL}${ITALIC}PATH${NORMAL}"
+	echo -e "${space}${space}Specific the path of directory that you want to clean up."
+	echo ""
+	echo -e "For more information, you can ${BOLD}man kindle-cleaner${NORMAL}"
+	echo -e "${BOLD}${horizontal}======${horizontal}${NORMAL}"
 }
 
 # Normal Mode
