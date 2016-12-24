@@ -1,0 +1,247 @@
+#!/bin/bash 
+
+# Function:
+# 	Clean up the directory of Kindle, delete the unnecessary *.sdr file
+# History:
+# 	2016-12-04
+# 		Create this program
+
+# kindle dir: /media/i-renyuntao/Kindle/documents
+
+# Set Fonts/Colors Control Sequences
+NORMAL="\x1B[0m"
+BOLD="\x1B[1m"
+ITALIC="\x1B[3m"
+UNDERLINE="\x1B[4m"
+RED="\x1B[91m"
+YELLOW="\x1B[32m"
+BLUE="\x1B[94m"
+MAGENTA="\x1B[95m"
+CYAN="\x1B[96m"
+CYAN_B="\x1B[106m"
+YB="${YELLOW}${BOLD}"
+UI="${UNDERLINE}${ITALIC}"
+
+# Temporary file
+cmp_file='cmp_tmp'
+sdr_file='sdr_tmp'
+
+space="                                                              "
+
+# Statistic the number of file that have been deleted
+declare -i count_deleted_file=0
+
+# Options flag 
+h_option=0
+n_option=0
+s_option=0
+p_option=0
+
+# Set default dirctory to clean
+whoami=`whoami`
+dir_path="/media/${whoami}/Kindle/documents/"
+
+# Print help message
+print_help()
+{
+	clear
+	local horizontal='================================='
+	local space='   '
+	echo -e "${BOLD}${horizontal} HELP ${horizontal}"
+	echo -e "NAME${NORMAL}"
+	echo "${space}kindle-cleaner - Clean up the directory of Kindle"
+	echo ""
+	echo -e "${BOLD}SYNOPSIS${NORMAL}"
+	echo -e "${space}kindle-cleaner [ ${BOLD}-h${NORMAL} | ${BOLD}--help${NORMAL} ]"
+	echo -e "${space}kindle-cleaner [ ${BOLD}-n${NORMAL} | ${BOLD}--normal${NORMAL} ]"
+	echo -e "${space}kindle-cleaner [ ${BOLD}-s${NORMAL} | ${BOLD}--strict${NORMAL} ]"
+	echo -e "${space}kindle-cleaner [ ${BOLD}-p${NORMAL} ${UI}PATH${NORMAL} | ${BOLD}--path${NORMAL} ${UI}PATH${NORMAL} ]"
+	echo ""
+	echo -e "${BOLD}OPTIONS${NORMAL}"
+	echo -e "${space}${BOLD}-h, --help${NORMAL}"
+	echo -e "${space}${space}${space}Show this help message and exit"
+	echo ""
+	echo -e "${space}${BOLD}-n, --normal${NORMAL}"
+	echo -e "${space}${space}${space}Normal Mode(Default)"
+	echo ""
+	echo -e "${space}${BOLD}-s, --strict${NORMAL}"
+	echo -e "${space}${space}${space}Strict Mode"
+	echo ""
+	echo -e "${space}${BOLD}-p ${NORMAL}${ITALIC}PATH${NORMAL}, ${BOLD}--path=${NORMAL}${ITALIC}PATH${NORMAL}"
+	echo -e "${space}${space}Specific the path of directory that you want to clean up."
+	echo ""
+	echo -e "For more information, you can ${BOLD}man kindle-cleaner${NORMAL}"
+	echo -e "${BOLD}${horizontal}======${horizontal}${NORMAL}"
+}
+
+# Normal Mode
+normal()
+{
+	echo -e "${CYAN}In Normal Mode ...${NORMAL}"
+	echo -e "${CYAN_B}${space}${NORMAL}"
+
+	IFS=$'\n'
+	for file in `cat ${dir_path}${sdr_file}`
+	do
+		if grep -Fq "$file" ${dir_path}${cmp_file}
+		then
+			# Do nothing
+			:
+		else
+			# Delete a line that match $file in file $sdr_file
+			sed -i "/$file/ d" ${dir_path}${sdr_file}
+
+			# Delete unnecessary *sdr file of Kindle
+			need_rm=${dir_path}${file}".sdr"
+			echo "Delete $need_rm"
+			rm -r $need_rm
+			let 'count_deleted_file=count_deleted_file+1'
+		fi
+	done
+
+	if [ $count_deleted_file -eq 0 ]
+	then
+		echo "NULL"
+	fi
+	echo -e "${CYAN_B}${space}${NORMAL}"
+}
+
+# Strict Mode
+strict()
+{
+	echo -e "${CYAN}In Strict Mode ...${NORMAL}"
+	echo -e "${CYAN_B}${space}${NORMAL}"
+
+	# Delete the filename extension   
+	sed -i -r 's/(.*)\.((azw3)|(azw)|(mobi)|(txt))/\1/' ${dir_path}${cmp_file}
+
+	IFS=$'\n'
+	for file in `cat ${dir_path}${sdr_file}`
+	do
+		flag=0
+		for line in `cat ${dir_path}${cmp_file}`
+		do
+			if [ "$file" == "$line" ]
+			then
+				echo "$file == $line"
+				flag=1
+				break
+			fi
+		done
+
+		if [ "$flag" == "0" ]
+		then
+			need_rm=${dir_path}${file}".sdr"
+			echo "Delete $need_rm"
+			rm -r $need_rm
+			let 'count_deleted_file=count_deleted_file+1'
+		fi
+	done
+
+	if [ $count_deleted_file -eq 0 ]
+	then
+		echo "NULL"
+	fi
+	echo -e "${CYAN_B}${space}${NORMAL}"
+}
+
+
+# Read the options
+options=`getopt -o hnsp: --long path:,help,normal,strict -- "$@"`
+eval set -- "$options"
+
+# Parse options
+while true
+do
+	case "$1" in
+		-h|--help)
+			h_option=1
+			shift
+			;;
+		-n|--normal)
+			n_option=1
+			shift
+			;;
+		-s|--strict)
+			s_option=1
+			shift
+			;;
+		-p|--path)
+			p_option=1
+			dir_path="$2"
+
+			# Get last character of "$dir_path"
+			last_char=${dir_path: -1}
+
+			if [ "$last_char" != "/" ]
+			then
+				dir_path="${dir_path}/"
+			fi
+			shift 2
+			;;
+		--)
+			shift
+			break
+			;;
+		*)
+			echo "Internal error!"
+			exit 1
+			;;
+	esac
+done
+
+if [ "$h_option" == "1" ]
+then
+	print_help
+	exit 0
+fi
+
+# Check if exits the path
+if [ ! -d "$dir_path" ]
+then
+echo "Error: Don't exist the directory '$dir_path'"
+	exit 3
+fi
+
+# The $cmp_file contain the name of file which the name is match *.azw or *.azw3 or *.mobi or *.txt 
+ls $dir_path | grep -E "\.azw$|\.azw3$|\.mobi$|\.txt$" > ${dir_path}${cmp_file}
+
+# Write the name of *.sdr directory(don't include the suffix '.sdr') into file "$sdr_file"
+#ls | grep "\.sdr" | grep -o ".*[^(.sdr)]" > $sdr_file
+ls $dir_path | grep "\.sdr" | sed -r 's/(.*)\.sdr/\1/' > ${dir_path}${sdr_file}
+
+
+# Set default option
+if [ "$s_option" == "0" -a "$n_option" == "0" ]
+then
+	n_option=1
+# Deal with error situation
+elif [ "$s_option" == "1" -a "$n_option" == "1" ]
+then
+	echo -e "${RED}Error! -e option can't together with -n option${NORMAL}"
+	exit 2
+fi
+	
+# Call different function according to different option user specify
+if [ "$s_option" == "1" ]
+then
+	strict
+else
+	normal
+fi
+
+# remove temporary file
+rm ${dir_path}${cmp_file}
+rm ${dir_path}${sdr_file}
+
+file="file"
+
+if [ $count_deleted_file -gt 1 ]
+then
+	file=${file}s
+fi
+
+echo -e "${MAGENTA}$count_deleted_file $file have been deleted.${NORMAL}"
+echo -e "${BLUE}SUCCESS!${NORMAL}"
+
+exit 0
