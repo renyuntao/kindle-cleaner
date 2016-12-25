@@ -6,7 +6,7 @@
 # 	2016-12-04
 # 		Create this program
 
-# kindle dir: /media/i-renyuntao/Kindle/documents
+# kindle dir: /media/`whoami`/Kindle/documents
 
 # Set Fonts/Colors Control Sequences
 NORMAL="\x1B[0m"
@@ -199,7 +199,8 @@ fi
 # Check if exits the path
 if [ ! -d "$dir_path" ]
 then
-echo "Error: Don't exist the directory '$dir_path'"
+	echo "Error: Don't exist the directory '$dir_path'"
+	echo "Please connect the Kindle to your computer using a micro-USB cable first."
 	exit 3
 fi
 
